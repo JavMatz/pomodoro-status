@@ -68,7 +68,7 @@ void countdown(int minutes) {
   int timerMinutes = minutes;
   int timerSeconds = 0;
 
-  while (minutes >= 0) {
+  while (timerMinutes >= 0) {
     while (timerSeconds >= 0) {
       std::cout << "\rTime left: " << std::setw(2) << std::setfill('0') << timerMinutes
         << ":" << std::setw(2) << std::setfill('0') << timerSeconds << std::flush;
@@ -108,12 +108,22 @@ int main(int argc, const char *argv[]) {
     return 0;
   }
 
-  countdown(settings.restTime);
+  int currentSession = 1;
 
-  /*std::cout << "Work: " << settings.workTime << std::endl;*/
-  /*std::cout << "Rest: " << settings.restTime << std::endl;*/
-  /*std::cout << "Long Rest: " << settings.longRestTime << std::endl;*/
-  /*std::cout << "Sessions: " << settings.sessionsBeforeLongRest << std::endl;*/
+  while (true) {
+    while (currentSession <= settings.sessionsBeforeLongRest) {
+      /*std::cout << "Session " << currentSession << std::endl;*/
+      /*std::cout << "Working..." << std::endl;*/
+      countdown(settings.workTime);
+      /*std::cout << "Resting..." << std::endl;*/
+      countdown(settings.restTime);
+
+      ++currentSession;
+    }
+    /*std::cout << "Long Resting..." << std::endl;*/
+    countdown(settings.longRestTime);
+    currentSession = 1;
+  }
 
   return 0;
 }
