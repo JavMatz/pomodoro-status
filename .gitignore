@@ -1,0 +1,34 @@
+# Ignore build directory
+/build/
+
+# Ignore CMake generated files
+CMakeFiles
+CMakeCache.txt
+cmake_install.cmake
+CMakeLists.txt.user
+Makefile
+
+# Ignore object files
+*.o
+*.obj
+
+# Ignore executable files
+*.exe
+*.out
+*.a
+*.lib
+*.dll
+*.so
+*.dylib
+
+# Ignore IDE specific files (example for CLion)
+/.idea/
+/.vscode/
+/*.code-workspace
+/.project
+/.cproject
+
+# Ignore system-specific files
+.DS_Store
+Thumbs.db
+*.swp
