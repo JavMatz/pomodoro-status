@@ -32,13 +32,17 @@ const std::unordered_map<std::string, OneArgHandle> OneArgs{
     {"-w",
      [](TimerSettings &s, const std::string &arg) { s.workTime = stoi(arg); }},
     {"--rest-minutes",
-     [](TimerSettings &s, const std::string &arg) { s.workTime = stoi(arg); }},
+     [](TimerSettings &s, const std::string &arg) { s.restTime = stoi(arg); }},
     {"-r",
-     [](TimerSettings &s, const std::string &arg) { s.workTime = stoi(arg); }},
+     [](TimerSettings &s, const std::string &arg) { s.restTime = stoi(arg); }},
     {"--long-rest-minutes",
-     [](TimerSettings &s, const std::string &arg) { s.workTime = stoi(arg); }},
+     [](TimerSettings &s, const std::string &arg) { s.longRestTime = stoi(arg); }},
     {"-l",
-     [](TimerSettings &s, const std::string &arg) { s.workTime = stoi(arg); }},
+     [](TimerSettings &s, const std::string &arg) { s.longRestTime = stoi(arg); }},
+    {"--sessions",
+     [](TimerSettings &s, const std::string &arg) { s.sessionsBeforeLongRest = stoi(arg); }},
+    {"-s",
+     [](TimerSettings &s, const std::string &arg) { s.sessionsBeforeLongRest = stoi(arg); }},
 };
 
 TimerSettings parse_settings(int argc, const char *argv[]) {
@@ -112,15 +116,15 @@ int main(int argc, const char *argv[]) {
 
   while (true) {
     while (currentSession <= settings.sessionsBeforeLongRest) {
-      /*std::cout << "Session " << currentSession << std::endl;*/
-      /*std::cout << "Working..." << std::endl;*/
+      std::cout << "Session " << currentSession << std::endl;
+      std::cout << "Working..." << std::endl;
       countdown(settings.workTime);
-      /*std::cout << "Resting..." << std::endl;*/
+      std::cout << "Resting..." << std::endl;
       countdown(settings.restTime);
 
       ++currentSession;
     }
-    /*std::cout << "Long Resting..." << std::endl;*/
+    std::cout << "Long Resting..." << std::endl;
     countdown(settings.longRestTime);
     currentSession = 1;
   }
