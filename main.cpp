@@ -98,7 +98,13 @@ int main(int argc, const char *argv[]) {
   TimerSettings settings = parse_settings(argc, argv);
 
   if (settings.help) {
-    std::cout << "Ayuda!" << std::endl;
+    std::cout << "Usage:" << std::endl;
+    std::cout << "\tsimple-pomodoro [OPTIONS] " << std::endl;
+    std::cout << "\t\t--help or -h Show this message" << std::endl;
+    std::cout << "\t\t--work-minutes or -w Lenght of work session" << std::endl;
+    std::cout << "\t\t--rest-minutes or -r Lenght of rest" << std::endl;
+    std::cout << "\t\t--long-rest-minutes or -l Lenght of long rest after set of sessions" << std::endl;
+    std::cout << "\t\t--sessions or -s Number of sessions before long rest" << std::endl;
     return 0;
   }
 
