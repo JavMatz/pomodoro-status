@@ -69,7 +69,7 @@ void skip_this_timer(int signal) {
   }
 }
 
-void countdown(int minutes) {
+void countdown(int minutes, std::string type) {
   int timerMinutes = minutes;
   int timerSeconds = 0;
 
@@ -78,9 +78,10 @@ void countdown(int minutes) {
       if (stopTimerFlag) break;
       while (timerSeconds >= 0) {
         if (stopTimerFlag) break;
-        std::cout << "\r" << std::setw(2) << std::setfill('0') << timerMinutes
+        std::cout << type
+          << "\t" << std::setw(2) << std::setfill('0') << timerMinutes
           << ":" << std::setw(2) << std::setfill('0') << timerSeconds
-          << std::flush;
+          << std::endl;
         std::this_thread::sleep_for(std::chrono::seconds(1));
         --timerSeconds;
       }
@@ -89,6 +90,7 @@ void countdown(int minutes) {
     }
   }
   stopTimerFlag = 0;
+  std::cout << std::endl;
 }
 
 int main(int argc, const char *argv[]) {
@@ -120,13 +122,12 @@ int main(int argc, const char *argv[]) {
 
   while (true) {
     while (currentSession <= settings.sessionsBeforeLongRest) {
-      countdown(settings.workTime);
-      /*std::cout << "Resting..." << std::endl;*/
-      countdown(settings.restTime);
+      countdown(settings.workTime, "work");
+      countdown(settings.restTime, "rest");
 
       ++currentSession;
     }
-    countdown(settings.longRestTime);
+    countdown(settings.longRestTime, "longRest");
     currentSession = 1;
   }
 
