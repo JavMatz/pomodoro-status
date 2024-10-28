@@ -4,12 +4,10 @@
 #include <iomanip>
 #include <iostream>
 #include <ostream>
-#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <thread>
 #include <unordered_map>
-#include <vector>
 
 volatile sig_atomic_t stopTimerFlag = 0;
 
