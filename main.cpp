@@ -1,4 +1,5 @@
 #include <chrono>
+#include <csignal>
 #include <functional>
 #include <iomanip>
 #include <iostream>
@@ -10,8 +11,9 @@
 #include <unordered_map>
 #include <vector>
 
-struct TimerSettings
-{
+volatile sig_atomic_t stopTimerFlag = 0;
+
+struct TimerSettings {
   bool help{false};
   int workTime{25};
   int restTime{5};
@@ -23,65 +25,37 @@ typedef std::function<void(TimerSettings &)> NoArgHandle;
 typedef std::function<void(TimerSettings &, const std::string &)> OneArgHandle;
 
 const std::unordered_map<std::string, NoArgHandle> NoArgs{
-    {"--help", [](TimerSettings &s)
-     { s.help = true; }},
-    {"-h", [](TimerSettings &s)
-     { s.help = true; }},
+    {"--help", [](TimerSettings &s) { s.help = true; }},
+    {"-h", [](TimerSettings &s) { s.help = true; }},
 };
 
 const std::unordered_map<std::string, OneArgHandle> OneArgs{
-    {"--work-minutes",
-     [](TimerSettings &s, const std::string &arg)
-     { s.workTime = stoi(arg); }},
-    {"-w",
-     [](TimerSettings &s, const std::string &arg)
-     { s.workTime = stoi(arg); }},
-    {"--rest-minutes",
-     [](TimerSettings &s, const std::string &arg)
-     { s.restTime = stoi(arg); }},
-    {"-r",
-     [](TimerSettings &s, const std::string &arg)
-     { s.restTime = stoi(arg); }},
-    {"--long-rest-minutes",
-     [](TimerSettings &s, const std::string &arg)
-     { s.longRestTime = stoi(arg); }},
-    {"-l",
-     [](TimerSettings &s, const std::string &arg)
-     { s.longRestTime = stoi(arg); }},
-    {"--sessions",
-     [](TimerSettings &s, const std::string &arg)
-     { s.sessionsBeforeLongRest = stoi(arg); }},
-    {"-s",
-     [](TimerSettings &s, const std::string &arg)
-     { s.sessionsBeforeLongRest = stoi(arg); }},
+    {"--work-minutes", [](TimerSettings &s, const std::string &arg) { s.workTime = stoi(arg); }},
+    {"-w", [](TimerSettings &s, const std::string &arg) { s.workTime = stoi(arg); }},
+    {"--rest-minutes", [](TimerSettings &s, const std::string &arg) { s.restTime = stoi(arg); }},
+    {"-r", [](TimerSettings &s, const std::string &arg) { s.restTime = stoi(arg); }},
+    {"--long-rest-minutes", [](TimerSettings &s, const std::string &arg) { s.longRestTime = stoi(arg); }},
+    {"-l", [](TimerSettings &s, const std::string &arg) { s.longRestTime = stoi(arg); }},
+    {"--sessions", [](TimerSettings &s, const std::string &arg) { s.sessionsBeforeLongRest = stoi(arg); }},
+    {"-s", [](TimerSettings &s, const std::string &arg) { s.sessionsBeforeLongRest = stoi(arg); }},
 };
 
-TimerSettings parse_settings(int argc, const char *argv[])
-{
+TimerSettings parse_settings(int argc, const char *argv[]) {
   TimerSettings settings;
 
-  for (int i{1}; i < argc; i++)
-  {
+  for (int i{1}; i < argc; i++) {
     std::string opt{argv[i]};
 
-    if (auto j{NoArgs.find(opt)}; j != NoArgs.end())
-    {
+    if (auto j{NoArgs.find(opt)}; j != NoArgs.end()) {
       j->second(settings);
-    }
-    else if (auto k{OneArgs.find(opt)}; k != OneArgs.end())
-    {
+    } else if (auto k{OneArgs.find(opt)}; k != OneArgs.end()) {
       ;
-      if (++i < argc)
-      {
+      if (++i < argc) {
         k->second(settings, {argv[i]});
-      }
-      else
-      {
+      } else {
         throw std::runtime_error{"missing param after"};
       }
-    }
-    else
-    {
+    } else {
       std::cerr << "No option" << std::endl;
     }
   }
@@ -89,72 +63,69 @@ TimerSettings parse_settings(int argc, const char *argv[])
   return settings;
 }
 
-void countdown(int minutes)
-{
+void skip_this_timer(int signal) {
+  if (signal == SIGUSR1) {
+    stopTimerFlag = 1;
+  }
+}
+
+void countdown(int minutes) {
   int timerMinutes = minutes;
   int timerSeconds = 0;
 
-  while (timerMinutes >= 0)
-  {
-    while (timerSeconds >= 0)
-    {
-      std::cout << "\rTime left: " << std::setw(2) << std::setfill('0') << timerMinutes
-                << ":" << std::setw(2) << std::setfill('0') << timerSeconds << std::flush;
-      std::this_thread::sleep_for(std::chrono::seconds(1));
-      --timerSeconds;
+  while (!stopTimerFlag) {
+    while (timerMinutes >= 0) {
+      if (stopTimerFlag) break;
+      while (timerSeconds >= 0) {
+        if (stopTimerFlag) break;
+        std::cout << "\r" << std::setw(2) << std::setfill('0') << timerMinutes
+          << ":" << std::setw(2) << std::setfill('0') << timerSeconds
+          << std::flush;
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        --timerSeconds;
+      }
+      --timerMinutes;
+      timerSeconds = 59;
     }
-    --timerMinutes;
-    timerSeconds = 59;
   }
+  stopTimerFlag = 0;
 }
 
-std::vector<std::string> split_time_string(const std::string &str,
-                                           char delimiter = ':')
-{
-  std::vector<std::string> tokens;
-  std::string token;
-  std::stringstream ss(str);
+int main(int argc, const char *argv[]) {
 
-  while (std::getline(ss, token, delimiter))
-  {
-    tokens.push_back(token);
-  }
-
-  return tokens;
-}
-
-int main(int argc, const char *argv[])
-{
+  signal(SIGUSR1, skip_this_timer);
 
   TimerSettings settings = parse_settings(argc, argv);
 
-  if (settings.help)
-  {
+  if (settings.help) {
     std::cout << "Usage:" << std::endl;
     std::cout << "\tsimple-pomodoro [OPTIONS] " << std::endl;
     std::cout << "\t\t--help or -h Show this message" << std::endl;
-    std::cout << "\t\t--work-minutes or -w Lenght of work session" << std::endl;
-    std::cout << "\t\t--rest-minutes or -r Lenght of rest" << std::endl;
-    std::cout << "\t\t--long-rest-minutes or -l Lenght of long rest after set of sessions" << std::endl;
-    std::cout << "\t\t--sessions or -s Number of sessions before long rest" << std::endl;
+    std::cout << "\t\t--work-length or -w <lenght of work session in minutes> "
+                 "(default: 25 min)"
+              << std::endl;
+    std::cout
+        << "\t\t--rest-length or -r <lenght of rest minutes> (default: 5 min)"
+        << std::endl;
+    std::cout << "\t\t--long-rest-length or -l <lenght of long rest after set "
+                 "of sessions minutes> (default: 15 min)"
+              << std::endl;
+    std::cout << "\t\t--sessions or -s <number of sessions before long rest> "
+                 "(default: 4 sessions)"
+              << std::endl;
     return 0;
   }
 
   int currentSession = 1;
 
-  while (true)
-  {
-    while (currentSession <= settings.sessionsBeforeLongRest)
-    {
-      /* std::cout << "Session " << currentSession << std::endl;
-      std::cout << "Working..." << std::endl; */
+  while (true) {
+    while (currentSession <= settings.sessionsBeforeLongRest) {
       countdown(settings.workTime);
-      std::cout << "Resting..." << std::endl;
+      /*std::cout << "Resting..." << std::endl;*/
       countdown(settings.restTime);
 
       ++currentSession;
     }
-    // std::cout << "Long Resting..." << std::endl;
     countdown(settings.longRestTime);
     currentSession = 1;
   }
