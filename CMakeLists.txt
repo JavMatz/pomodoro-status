@@ -4,4 +4,4 @@ cmake_minimum_required(VERSION 3.10)
 project(simple-pomodoro)
 
 # Add an executable
-add_executable(simple-pomodoro main.cpp)
+add_executable(simple-pomodoro src/main.cpp)

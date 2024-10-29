@@ -71,24 +71,31 @@ void countdown(int minutes, std::string type) {
   int timerMinutes = minutes;
   int timerSeconds = 0;
 
-  while (!stopTimerFlag) {
-    while (timerMinutes >= 0) {
+  while (timerMinutes >= 0) {
+    if (stopTimerFlag) break;
+    while (timerSeconds >= 0) {
       if (stopTimerFlag) break;
-      while (timerSeconds >= 0) {
-        if (stopTimerFlag) break;
-        std::cout << type
-          << "\t" << std::setw(2) << std::setfill('0') << timerMinutes
-          << ":" << std::setw(2) << std::setfill('0') << timerSeconds
-          << std::endl;
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-        --timerSeconds;
-      }
-      --timerMinutes;
-      timerSeconds = 59;
+      std::cout << type
+        << "\t" << std::setw(2) << std::setfill('0') << timerMinutes
+        << ":" << std::setw(2) << std::setfill('0') << timerSeconds
+        << std::endl;
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+      --timerSeconds;
     }
+    --timerMinutes;
+    timerSeconds = 59;
   }
   stopTimerFlag = 0;
-  std::cout << std::endl;
+}
+
+void help_message(){
+    std::cout << "Usage:" << std::endl;
+    std::cout << "\tsimple-pomodoro [OPTIONS] " << std::endl;
+    std::cout << "\t\t--help or -h Show this message" << std::endl;
+    std::cout << "\t\t--work-length or -w <lenght of work session in minutes> (default: 25 min)" << std::endl;
+    std::cout << "\t\t--rest-length or -r <lenght of rest minutes> (default: 5 min)" << std::endl;
+    std::cout << "\t\t--long-rest-length or -l <lenght of long rest after set of sessions minutes> (default: 15 min)" << std::endl;
+    std::cout << "\t\t--sessions or -s <number of sessions before long rest> (default: 4 sessions)" << std::endl;
 }
 
 int main(int argc, const char *argv[]) {
@@ -98,21 +105,7 @@ int main(int argc, const char *argv[]) {
   TimerSettings settings = parse_settings(argc, argv);
 
   if (settings.help) {
-    std::cout << "Usage:" << std::endl;
-    std::cout << "\tsimple-pomodoro [OPTIONS] " << std::endl;
-    std::cout << "\t\t--help or -h Show this message" << std::endl;
-    std::cout << "\t\t--work-length or -w <lenght of work session in minutes> "
-                 "(default: 25 min)"
-              << std::endl;
-    std::cout
-        << "\t\t--rest-length or -r <lenght of rest minutes> (default: 5 min)"
-        << std::endl;
-    std::cout << "\t\t--long-rest-length or -l <lenght of long rest after set "
-                 "of sessions minutes> (default: 15 min)"
-              << std::endl;
-    std::cout << "\t\t--sessions or -s <number of sessions before long rest> "
-                 "(default: 4 sessions)"
-              << std::endl;
+    help_message();
     return 0;
   }
 
